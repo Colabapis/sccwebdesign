@@ -70,7 +70,7 @@ function initContactForm() {
 
     const subject = encodeURIComponent(`Website enquiry from ${name}`);
     const body = encodeURIComponent(
-      `Name: ${name}\nEmail: ${email}\nPhone: ${data.get("phone") || ""}\nBudget: ${data.get("budget") || ""}\n\n${message}`
+      `Name: ${name}\nEmail: ${email}\nProject type: ${data.get("budget") || ""}\n\n${message}`
     );
     note.textContent = "Opening your email app with the enquiry ready to send.";
     window.location.href = `mailto:hello@sccwebdesign.co.uk?subject=${subject}&body=${body}`;

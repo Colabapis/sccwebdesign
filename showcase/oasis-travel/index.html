@@ -3,38 +3,37 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Oasis Travel | Bespoke beach and city escapes</title>
-    <meta name="description" content="A modern travel website concept by SCC Web Design.">
+    <title>Oasis Travel | Tailored holidays and escapes</title>
+    <meta name="description" content="Oasis Travel is a fictional modern travel website concept by SCC Web Design.">
+    <link rel="icon" href="favicon.ico" sizes="any">
+    <link rel="icon" href="assets/favicon-32x32.png" type="image/png">
+    <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
     <link rel="stylesheet" href="style.css">
+    <script src="script.js" defer></script>
   </head>
   <body>
     <header class="site-header">
-      <a class="brand" href="../../index.html">Oasis Travel</a>
-      <nav aria-label="Demo navigation">
-        <a href="#escapes">Escapes</a>
-        <a href="#why">Why Oasis</a>
-        <a href="#enquire">Enquire</a>
+      <a class="brand" href="index.html">Oasis Travel</a>
+      <button class="menu-toggle" data-menu-toggle aria-label="Open menu">Menu</button>
+      <nav data-nav>
+        <a href="index.html">Home</a><a href="destinations.html">Destinations</a><a href="contact.html">Enquire</a><a href="privacy.html">Privacy</a>
       </nav>
     </header>
     <main>
       <section class="hero travel">
-        <div>
-          <p class="eyebrow">Tailored holidays</p>
-          <h1>Find your next warm horizon.</h1>
-          <p>Luxury beach breaks, cultural city stays and once-in-a-lifetime journeys planned around how you actually like to travel.</p>
-          <a class="button" href="#enquire">Start planning</a>
-        </div>
+        <div><p class="eyebrow">Tailored holidays</p><h1>Find your next warm horizon.</h1><p>Luxury beach breaks, cultural city stays and once-in-a-lifetime journeys planned around how you actually like to travel.</p><a class="button" href="contact.html">Start planning</a></div>
       </section>
-      <section class="section" id="escapes">
-        <div class="heading"><h2>Featured escapes</h2><p>Image-rich pages designed to make each destination feel immediate and desirable.</p></div>
+      <section class="section">
+        <div class="heading"><h2>Travel pages should sell the feeling first.</h2><p>This concept uses generous photography, calm luxury colours and simple enquiry routes for a modern independent travel brand.</p></div>
         <div class="cards">
           <article><img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=900&q=80" alt="Turquoise beach and white sand"><h3>Island retreats</h3><p>Soft sands, private transfers and hand-picked boutique hotels.</p></article>
           <article><img src="https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=900&q=80" alt="Modern city skyline at sunset"><h3>City stopovers</h3><p>Short breaks with the right hotel, neighbourhood and itinerary.</p></article>
           <article><img src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80" alt="Peaceful mountain lake with cabin"><h3>Slow travel</h3><p>Scenic stays for switching off, exploring gently and travelling well.</p></article>
         </div>
       </section>
-      <section class="band" id="why"><h2>Travel design should sell the feeling first.</h2><p>This concept uses generous photography, calm luxury colours and simple enquiry routes.</p></section>
-      <section class="section enquire" id="enquire"><h2>Plan an escape</h2><p>Email hello@oasistravel.example with your dates, destination ideas and budget.</p></section>
+      <section class="feature"><h2>Hand-picked ideas, not endless scrolling.</h2><p>Visitors are guided through destination styles, trust points and a short enquiry form.</p></section>
     </main>
+    <footer><strong>Oasis Travel</strong><nav><a href="destinations.html">Destinations</a><a href="contact.html">Contact</a><a href="cookie-policy.html">Cookies</a><a href="../../index.html">SCC Web Design</a></nav></footer>
+    <div class="cookie-banner" data-cookie-banner><p>This demo uses essential browser storage to remember cookie preferences.</p><button data-cookie-choice="accepted">Accept</button><button data-cookie-choice="rejected">Essential only</button></div>
   </body>
 </html>
