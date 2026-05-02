@@ -1,0 +1,27 @@
+name: Deploy website
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Upload static site to Hostinger
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Upload files
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HOSTINGER_SSH_HOST }}
+          username: ${{ secrets.HOSTINGER_SSH_USERNAME }}
+          password: ${{ secrets.HOSTINGER_SSH_PASSWORD }}
+          port: ${{ secrets.HOSTINGER_SSH_PORT }}
+          target: ${{ secrets.HOSTINGER_PUBLIC_HTML_DIR }}
+          source: "assets,contact.html,cookie-policy.html,favicon.ico,index.html,privacy.html,robots.txt,script.js,site.webmanifest,sitemap.xml,styles.css"
+          overwrite: true
