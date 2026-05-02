@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://sccwebdesign.co.uk/sitemap.xml
