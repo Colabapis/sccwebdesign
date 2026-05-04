@@ -78,7 +78,7 @@ echo json_encode([
         : "Request sent to SCC. Your website preview can be prepared shortly and will expire {$ttl} minutes after it is generated."
 ]);
 
-function dispatch_site_factory(array $factory, string $requestJson, int $ttl): bool|string
+function dispatch_site_factory(array $factory, string $requestJson, int $ttl)
 {
     $repo = trim((string)$factory['repo']);
     $workflow = trim((string)$factory['workflow']);
@@ -100,29 +100,54 @@ function dispatch_site_factory(array $factory, string $requestJson, int $ttl): b
     ], JSON_UNESCAPED_SLASHES);
 
     $url = "https://api.github.com/repos/{$repo}/actions/workflows/{$workflow}/dispatches";
-    $ch = curl_init($url);
-    if ($ch === false) {
-        return 'Could not initialise GitHub request.';
+    $headers = [
+        'Accept: application/vnd.github+json',
+        'Authorization: Bearer ' . $token,
+        'Content-Type: application/json',
+        'User-Agent: SCC-Web-Design-Site-Builder',
+        'X-GitHub-Api-Version: 2022-11-28',
+    ];
+
+    $response = null;
+    $status = 0;
+    $error = '';
+
+    if (function_exists('curl_init')) {
+        $ch = curl_init($url);
+        if ($ch === false) {
+            return 'Could not initialise GitHub request.';
+        }
+
+        curl_setopt_array($ch, [
+            CURLOPT_POST => true,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPHEADER => $headers,
+            CURLOPT_POSTFIELDS => $payload,
+            CURLOPT_TIMEOUT => 20,
+        ]);
+
+        $response = curl_exec($ch);
+        $status = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $error = curl_error($ch);
+        curl_close($ch);
+    } else {
+        $context = stream_context_create([
+            'http' => [
+                'method' => 'POST',
+                'header' => implode("\r\n", $headers),
+                'content' => $payload,
+                'timeout' => 20,
+                'ignore_errors' => true,
+            ],
+        ]);
+        $response = file_get_contents($url, false, $context);
+        if (isset($http_response_header[0]) && preg_match('/\s(\d{3})\s/', $http_response_header[0], $matches)) {
+            $status = (int)$matches[1];
+        }
+        if ($response === false) {
+            $error = 'file_get_contents failed when calling GitHub API.';
+        }
     }
-
-    curl_setopt_array($ch, [
-        CURLOPT_POST => true,
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_HTTPHEADER => [
-            'Accept: application/vnd.github+json',
-            'Authorization: Bearer ' . $token,
-            'Content-Type: application/json',
-            'User-Agent: SCC-Web-Design-Site-Builder',
-            'X-GitHub-Api-Version: 2022-11-28',
-        ],
-        CURLOPT_POSTFIELDS => $payload,
-        CURLOPT_TIMEOUT => 20,
-    ]);
-
-    $response = curl_exec($ch);
-    $status = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $error = curl_error($ch);
-    curl_close($ch);
 
     if ($status === 204) {
         return true;
