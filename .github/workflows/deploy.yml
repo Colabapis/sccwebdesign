@@ -23,7 +23,7 @@ jobs:
           password: ${{ secrets.HOSTINGER_SSH_PASSWORD }}
           port: ${{ secrets.HOSTINGER_SSH_PORT }}
           target: ${{ secrets.HOSTINGER_PUBLIC_HTML_DIR }}
-          source: "assets,showcase,contact.html,cookie-policy.html,favicon.ico,index.html,privacy.html,robots.txt,script.js,site.webmanifest,sitemap.xml,styles.css,website-builder.html"
+          source: ".htaccess,assets,showcase,contact.html,cookie-policy.html,favicon.ico,index.html,privacy.html,robots.txt,script.js,site.webmanifest,sitemap.xml,styles.css,website-builder.html"
           overwrite: true
           timeout: 120s
           command_timeout: 20m
