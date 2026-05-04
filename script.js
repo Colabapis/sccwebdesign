@@ -130,6 +130,12 @@ function initSiteBuilderForm() {
       banner_image_count: Number(data.get("banner_image_count") || 3),
       pages: data.getAll("pages"),
       assets: data.getAll("assets"),
+      logo_url: String(data.get("logo_url") || "").trim(),
+      client_image_urls: String(data.get("client_image_urls") || "")
+        .split(/\r?\n/)
+        .map((url) => url.trim())
+        .filter(Boolean)
+        .slice(0, 10),
       analytics_measurement_id: String(data.get("analytics_measurement_id") || "").trim(),
       output: data.get("output"),
       preview_ttl_minutes: Number(data.get("preview_ttl_minutes") || 15),
