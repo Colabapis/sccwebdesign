@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Self-Service Website Builder | SCC Web Design</title>
+    <meta name="description" content="Create a structured website brief for SCC Web Design's automation-ready website factory.">
+    <link rel="icon" href="favicon.ico" sizes="any">
+    <link rel="icon" href="assets/favicon-32x32.png" type="image/png">
+    <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+    <link rel="manifest" href="site.webmanifest">
+    <link rel="stylesheet" href="styles.css">
+    <script src="script.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <nav class="nav" aria-label="Primary navigation">
+        <a class="brand" href="index.html" aria-label="SCC Web Design home"><img src="assets/scc-web-design-logo.jpg" alt="SCC Web Design"></a>
+        <button class="menu-toggle" type="button" aria-label="Open menu" aria-expanded="false" data-menu-toggle><span></span></button>
+        <div class="nav-links" data-nav-links>
+          <a href="index.html#services">Services</a>
+          <a href="index.html#work">Work</a>
+          <a href="index.html#process">Process</a>
+          <a href="website-builder.html">Website Builder</a>
+          <a href="contact.html">Contact</a>
+          <a class="nav-cta" href="#builder">Start brief</a>
+        </div>
+      </nav>
+    </header>
+    <main id="main">
+      <section class="builder-hero">
+        <div class="wrap">
+          <p class="eyebrow">SCC Site Factory</p>
+          <h1>Build a website brief in minutes.</h1>
+          <p>Choose the business type, style, pages and asset options. The form creates a structured request ready for SCC's private website factory workflow.</p>
+        </div>
+      </section>
+      <section class="section" id="builder">
+        <div class="wrap builder-layout">
+          <form class="builder-form" data-site-builder-form>
+            <div class="form-section">
+              <h2>Business Details</h2>
+              <div class="field"><label for="business_name">Business name</label><input id="business_name" name="business_name" required></div>
+              <div class="field"><label for="email">Email</label><input id="email" name="email" type="email" required></div>
+              <div class="field"><label for="location">Location</label><input id="location" name="location" placeholder="Brighton, Sussex, UK" required></div>
+              <div class="field"><label for="business_type">Business type</label><select id="business_type" name="business_type" required><option value="">Select one</option><option value="tree_surgeon">Tree surgeon</option><option value="electrician">Electrician</option><option value="plumber">Plumber</option><option value="accountant">Accountant</option><option value="hairdresser">Hairdresser</option><option value="travel_agency">Travel agency</option><option value="camping_glamping">Camping or glamping</option><option value="professional_service">Professional service</option><option value="local_service">Other local service</option></select></div>
+            </div>
+            <div class="form-section">
+              <h2>Website Choices</h2>
+              <div class="field"><label for="style">Style</label><select id="style" name="style" required><option value="modern">Modern</option><option value="premium">Premium</option><option value="friendly_local">Friendly local</option><option value="minimal">Minimal</option><option value="bold">Bold</option><option value="natural">Natural / organic</option><option value="luxury">Luxury</option></select></div>
+              <div class="field"><label for="colour">Colour direction</label><select id="colour" name="colour"><option value="match_business">Choose for my business</option><option value="blue">Blue</option><option value="green">Green</option><option value="black_gold">Black and gold</option><option value="light_neutral">Light neutral</option><option value="warm_earth">Warm earth</option></select></div>
+              <fieldset class="checkbox-grid"><legend>Pages to include</legend><label><input type="checkbox" name="pages" value="home" checked> Home</label><label><input type="checkbox" name="pages" value="services" checked> Services</label><label><input type="checkbox" name="pages" value="about"> About</label><label><input type="checkbox" name="pages" value="gallery"> Gallery</label><label><input type="checkbox" name="pages" value="reviews"> Reviews</label><label><input type="checkbox" name="pages" value="contact" checked> Contact</label><label><input type="checkbox" name="pages" value="privacy" checked> Privacy</label><label><input type="checkbox" name="pages" value="cookies" checked> Cookies</label></fieldset>
+            </div>
+            <div class="form-section">
+              <h2>Assets And Output</h2>
+              <fieldset class="checkbox-grid"><legend>Assets</legend><label><input type="checkbox" name="assets" value="generate_logo" checked> Generate logo draft</label><label><input type="checkbox" name="assets" value="favicons" checked> Favicon and touch icons</label><label><input type="checkbox" name="assets" value="free_images" checked> Free stock images</label><label><input type="checkbox" name="assets" value="analytics_placeholder"> Analytics placeholder</label></fieldset>
+              <div class="field"><label for="output">Preferred output</label><select id="output" name="output"><option value="preview">Preview folder</option><option value="zip">ZIP package</option><option value="review_first">Review with SCC first</option></select></div>
+              <div class="field"><label for="notes">Notes</label><textarea id="notes" name="notes" placeholder="Tell us about services, tone, competitors, or must-have features."></textarea></div>
+            </div>
+            <button class="button" type="submit">Prepare website request</button>
+            <p class="form-note" data-builder-note></p>
+          </form>
+          <aside class="builder-output">
+            <h2>Automation Request</h2>
+            <p>This preview shows the structured request that SCC can feed into the private Site Factory workflow. No secrets are exposed in this page.</p>
+            <pre data-builder-output>{
+  "status": "Waiting for brief"
+}</pre>
+            <a class="button secondary" href="mailto:hello@sccwebdesign.co.uk" data-builder-email>Email this request</a>
+          </aside>
+        </div>
+      </section>
+    </main>
+    <footer class="site-footer">
+      <div class="wrap footer-grid">
+        <div><img class="footer-logo" src="assets/scc-web-design-logo.jpg" alt="SCC Web Design"><p>Professional web design and development for clear, modern online experiences.</p></div>
+        <div><h3>Pages</h3><a href="index.html">Home</a><a href="website-builder.html">Website Builder</a><a href="contact.html">Contact</a><a href="privacy.html">Privacy</a><a href="cookie-policy.html">Cookies</a></div>
+        <div><h3>Contact</h3><a href="mailto:hello@sccwebdesign.co.uk">hello@sccwebdesign.co.uk</a><a href="https://sccwebdesign.co.uk">sccwebdesign.co.uk</a></div>
+        <div><h3>Services</h3><a href="index.html#services">Web design</a><a href="index.html#work">Showcase</a><a href="index.html#process">Launch support</a></div>
+      </div>
+      <div class="wrap copyright">© <span id="year">2026</span> SCC Web Design. All rights reserved.</div>
+    </footer>
+    <div class="cookie-banner" data-cookie-banner role="dialog" aria-live="polite" aria-label="Cookie consent"><p>We use essential cookies to run the site and, with your permission, Google Analytics cookies to understand visits and improve the experience.</p><div class="cookie-actions"><button class="small-button" type="button" data-cookie-choice="accepted">Accept analytics</button><button class="small-button light" type="button" data-cookie-choice="rejected">Essential only</button></div></div>
+  </body>
+</html>

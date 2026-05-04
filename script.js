@@ -77,10 +77,53 @@ function initContactForm() {
   });
 }
 
+function initSiteBuilderForm() {
+  const form = document.querySelector("[data-site-builder-form]");
+  if (!form) return;
+
+  const output = document.querySelector("[data-builder-output]");
+  const emailLink = document.querySelector("[data-builder-email]");
+  const note = document.querySelector("[data-builder-note]");
+
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const data = new FormData(form);
+    const pages = data.getAll("pages");
+    const assets = data.getAll("assets");
+    const request = {
+      job: "generate_static_website",
+      business_name: String(data.get("business_name") || "").trim(),
+      email: String(data.get("email") || "").trim(),
+      location: String(data.get("location") || "").trim(),
+      business_type: data.get("business_type"),
+      style: data.get("style"),
+      colour: data.get("colour"),
+      pages,
+      assets,
+      output: data.get("output"),
+      notes: String(data.get("notes") || "").trim(),
+      generated_at: new Date().toISOString()
+    };
+
+    if (!request.business_name || !request.email || !request.location || !request.business_type) {
+      note.textContent = "Please complete the business name, email, location and business type.";
+      return;
+    }
+
+    const json = JSON.stringify(request, null, 2);
+    output.textContent = json;
+    const subject = encodeURIComponent(`Website factory request: ${request.business_name}`);
+    const body = encodeURIComponent(`Please generate a website from this structured request:\n\n${json}`);
+    emailLink.href = `mailto:hello@sccwebdesign.co.uk?subject=${subject}&body=${body}`;
+    note.textContent = "Your structured request is ready. Use the email button to send it to SCC.";
+  });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   const year = document.getElementById("year");
   if (year) year.textContent = String(new Date().getFullYear());
   initMenu();
   initCookies();
   initContactForm();
+  initSiteBuilderForm();
 });
