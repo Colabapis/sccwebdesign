@@ -108,6 +108,7 @@ function initSiteBuilderForm() {
       email: String(data.get("email") || "").trim(),
       location: String(data.get("location") || "").trim(),
       live_domain: String(data.get("live_domain") || "").trim(),
+      map_location: String(data.get("map_location") || "").trim(),
       business_type: data.get("business_type"),
       style: data.get("style"),
       colour: data.get("colour"),
