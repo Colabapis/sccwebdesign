@@ -111,6 +111,8 @@ function initSiteBuilderForm() {
       business_type: data.get("business_type"),
       style: data.get("style"),
       colour: data.get("colour"),
+      banner_style: data.get("banner_style"),
+      banner_image_count: Number(data.get("banner_image_count") || 3),
       pages: data.getAll("pages"),
       assets: data.getAll("assets"),
       analytics_measurement_id: String(data.get("analytics_measurement_id") || "").trim(),
