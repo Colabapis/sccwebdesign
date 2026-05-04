@@ -807,6 +807,34 @@ h1 {
   line-height: 1.6;
 }
 
+.domain-note {
+  padding: 34px 0 0;
+}
+
+.domain-note .wrap {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 24px;
+  align-items: center;
+  padding: 24px;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.domain-note h2 {
+  margin-bottom: 10px;
+  font-size: clamp(1.6rem, 3vw, 2.5rem);
+  line-height: 1;
+}
+
+.domain-note p:not(.eyebrow) {
+  max-width: 780px;
+  margin-bottom: 0;
+  color: #526078;
+  line-height: 1.65;
+}
+
 .builder-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(320px, 0.58fr);
@@ -993,6 +1021,10 @@ h1 {
   }
 
   .cookie-banner {
+    grid-template-columns: 1fr;
+  }
+
+  .domain-note .wrap {
     grid-template-columns: 1fr;
   }
 
