@@ -113,6 +113,7 @@ function initSiteBuilderForm() {
       pages: data.getAll("pages"),
       assets: data.getAll("assets"),
       output: data.get("output"),
+      preview_ttl_minutes: Number(data.get("preview_ttl_minutes") || 15),
       notes: String(data.get("notes") || "").trim(),
       generated_at: new Date().toISOString()
     };
@@ -145,7 +146,7 @@ function initSiteBuilderForm() {
       return;
     }
 
-    renderRequest(request, "Your structured request is ready. Use the email button to send it to SCC.");
+    renderRequest(request, "Your structured request is ready. Use the email button to send it to SCC. SCC can then create the temporary preview safely.");
   });
 
   copyButton?.addEventListener("click", async () => {

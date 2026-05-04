@@ -33,14 +33,14 @@
         <div class="wrap">
           <p class="eyebrow">SCC Site Factory</p>
           <h1>Build a website brief in minutes.</h1>
-          <p>Choose the business type, style, pages and asset options. This page prepares the brief; the private SCC Site Factory repo then generates the working preview.</p>
+          <p>Choose the business type, style, pages and asset options. This page prepares the brief; SCC can then generate a private working copy and, when useful, a short-lived preview link for review.</p>
         </div>
       </section>
       <section class="builder-steps">
         <div class="wrap">
           <article><strong>01</strong><h2>Complete the brief</h2><p>Use the form or a pre-filled link like the one you tested.</p></article>
           <article><strong>02</strong><h2>Prepare request</h2><p>The page creates a structured JSON request and email draft.</p></article>
-          <article><strong>03</strong><h2>Generate preview</h2><p>SCC runs the request through the private GitHub Site Factory workflow.</p></article>
+          <article><strong>03</strong><h2>Preview safely</h2><p>SCC runs the request through the private Site Factory workflow and can publish a 15-minute test link.</p></article>
         </div>
       </section>
       <section class="section" id="builder">
@@ -62,7 +62,8 @@
             <div class="form-section">
               <h2>Assets And Output</h2>
               <fieldset class="checkbox-grid"><legend>Assets</legend><label><input type="checkbox" name="assets" value="generate_logo" checked> Generate logo draft</label><label><input type="checkbox" name="assets" value="favicons" checked> Favicon and touch icons</label><label><input type="checkbox" name="assets" value="free_images" checked> Free stock images</label><label><input type="checkbox" name="assets" value="analytics_placeholder"> Analytics placeholder</label></fieldset>
-              <div class="field"><label for="output">Preferred output</label><select id="output" name="output"><option value="preview">Preview folder</option><option value="zip">ZIP package</option><option value="review_first">Review with SCC first</option></select></div>
+              <div class="field"><label for="output">Preferred output</label><select id="output" name="output"><option value="temporary_preview">15-minute preview link</option><option value="preview">Private preview folder</option><option value="zip">ZIP package</option><option value="review_first">Review with SCC first</option></select></div>
+              <div class="field"><label for="preview_ttl_minutes">Preview lifetime</label><select id="preview_ttl_minutes" name="preview_ttl_minutes"><option value="15">15 minutes</option><option value="30">30 minutes</option><option value="60">60 minutes</option></select></div>
               <div class="field"><label for="notes">Notes</label><textarea id="notes" name="notes" placeholder="Tell us about services, tone, competitors, or must-have features."></textarea></div>
             </div>
             <button class="button" type="submit">Prepare website request</button>
@@ -71,7 +72,7 @@
           <aside class="builder-output">
             <div class="status-pill" data-builder-status>Waiting for brief</div>
             <h2>Automation Request</h2>
-            <p>This preview shows the structured request that SCC can feed into the private Site Factory workflow. Preparing the request does not publish anything automatically.</p>
+            <p>This shows the structured request SCC can feed into the private Site Factory workflow. Preparing the request does not publish anything automatically. Temporary previews are generated privately and removed after their expiry window.</p>
             <pre data-builder-output>{
   "status": "Waiting for brief"
 }</pre>
