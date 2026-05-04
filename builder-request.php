@@ -9,12 +9,18 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-$raw = file_get_contents('php://input') ?: '';
-$request = json_decode($raw, true);
+$request = read_request_payload();
 
 if (!is_array($request)) {
     http_response_code(400);
     echo json_encode(['ok' => false, 'message' => 'Invalid request payload.']);
+    exit;
+}
+
+$uploadResult = attach_uploaded_assets($request);
+if ($uploadResult !== true) {
+    http_response_code(422);
+    echo json_encode(['ok' => false, 'message' => $uploadResult]);
     exit;
 }
 
@@ -73,10 +79,212 @@ if (!$sent) {
 
 echo json_encode([
     'ok' => true,
+    'request' => $request,
     'message' => $dispatchResult === true
         ? "Request sent. The website preview is being prepared and will expire {$ttl} minutes after it is generated."
         : "Request sent to SCC. Your website preview can be prepared shortly and will expire {$ttl} minutes after it is generated."
 ]);
+
+function read_request_payload(): ?array
+{
+    $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+
+    if (stripos($contentType, 'multipart/form-data') !== false) {
+        $requestJson = (string)($_POST['request_json'] ?? '');
+        $request = json_decode($requestJson, true);
+
+        if (is_array($request)) {
+            return $request;
+        }
+
+        return [
+            'job' => 'generate_static_website',
+            'business_name' => trim((string)($_POST['business_name'] ?? '')),
+            'email' => trim((string)($_POST['email'] ?? '')),
+            'location' => trim((string)($_POST['location'] ?? '')),
+            'live_domain' => trim((string)($_POST['live_domain'] ?? '')),
+            'business_type' => trim((string)($_POST['business_type'] ?? '')),
+            'style' => trim((string)($_POST['style'] ?? '')),
+            'colour' => trim((string)($_POST['colour'] ?? '')),
+            'banner_style' => trim((string)($_POST['banner_style'] ?? '')),
+            'banner_image_count' => (int)($_POST['banner_image_count'] ?? 3),
+            'pages' => array_values((array)($_POST['pages'] ?? [])),
+            'assets' => array_values((array)($_POST['assets'] ?? [])),
+            'logo_url' => trim((string)($_POST['logo_url'] ?? '')),
+            'client_image_urls' => preg_split('/\r\n|\r|\n/', (string)($_POST['client_image_urls'] ?? '')) ?: [],
+            'analytics_measurement_id' => trim((string)($_POST['analytics_measurement_id'] ?? '')),
+            'output' => trim((string)($_POST['output'] ?? 'temporary_preview')),
+            'preview_ttl_minutes' => (int)($_POST['preview_ttl_minutes'] ?? 15),
+            'notes' => trim((string)($_POST['notes'] ?? '')),
+            'generated_at' => gmdate('c'),
+        ];
+    }
+
+    $raw = file_get_contents('php://input') ?: '';
+    $request = json_decode($raw, true);
+    return is_array($request) ? $request : null;
+}
+
+function attach_uploaded_assets(array &$request)
+{
+    $hasLogoUpload = isset($_FILES['logo_file']) && is_uploaded_file((string)($_FILES['logo_file']['tmp_name'] ?? ''));
+    $hasImageUploads = has_uploaded_file_set($_FILES['client_images'] ?? null);
+
+    if (!$hasLogoUpload && !$hasImageUploads) {
+        unset($request['logo_upload'], $request['client_image_uploads']);
+        return true;
+    }
+
+    $businessName = trim((string)($request['business_name'] ?? 'website'));
+    $folder = create_upload_folder($businessName);
+
+    if ($folder === null) {
+        return 'The server could not create an upload folder for the images.';
+    }
+
+    $baseUrl = public_base_url() . '/site-factory-uploads/' . basename($folder);
+
+    if ($hasLogoUpload) {
+        $logo = save_uploaded_image($_FILES['logo_file'], $folder, 'logo', true);
+        if (is_string($logo) && substr($logo, 0, 6) === 'error:') {
+            return substr($logo, 6);
+        }
+        if (is_string($logo) && $logo !== '') {
+            $request['logo_url'] = $baseUrl . '/' . $logo;
+        }
+    }
+
+    $uploadedImages = save_uploaded_image_set($_FILES['client_images'] ?? null, $folder, 10);
+    if (is_string($uploadedImages)) {
+        return $uploadedImages;
+    }
+
+    if (!isset($request['client_image_urls']) || !is_array($request['client_image_urls'])) {
+        $request['client_image_urls'] = [];
+    }
+
+    foreach ($uploadedImages as $imageName) {
+        array_unshift($request['client_image_urls'], $baseUrl . '/' . $imageName);
+    }
+
+    $request['client_image_urls'] = array_slice(array_values(array_filter($request['client_image_urls'])), 0, 10);
+    unset($request['logo_upload'], $request['client_image_uploads']);
+
+    return true;
+}
+
+function create_upload_folder(string $businessName): ?string
+{
+    $root = __DIR__ . '/site-factory-uploads';
+    if (!is_dir($root) && !mkdir($root, 0755, true)) {
+        return null;
+    }
+
+    $slug = strtolower(trim(preg_replace('/[^a-z0-9]+/i', '-', $businessName), '-')) ?: 'website';
+    $folder = $root . '/' . gmdate('Ymd-His') . '-' . $slug . '-' . bin2hex(random_bytes(3));
+
+    if (!mkdir($folder, 0755, true)) {
+        return null;
+    }
+
+    return $folder;
+}
+
+function public_base_url(): string
+{
+    $host = $_SERVER['HTTP_HOST'] ?? 'sccwebdesign.co.uk';
+    $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
+    return ($https ? 'https://' : 'http://') . $host;
+}
+
+function save_uploaded_image_set($files, string $folder, int $limit)
+{
+    if (!is_array($files) || !isset($files['name']) || !is_array($files['name'])) {
+        return [];
+    }
+
+    $saved = [];
+    $count = min(count($files['name']), $limit);
+
+    for ($index = 0; $index < $count; $index++) {
+        if (($files['error'][$index] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
+            continue;
+        }
+
+        $file = [
+            'name' => $files['name'][$index] ?? '',
+            'type' => $files['type'][$index] ?? '',
+            'tmp_name' => $files['tmp_name'][$index] ?? '',
+            'error' => $files['error'][$index] ?? UPLOAD_ERR_NO_FILE,
+            'size' => $files['size'][$index] ?? 0,
+        ];
+        $result = save_uploaded_image($file, $folder, 'photo-' . ($index + 1), false);
+
+        if (is_string($result) && substr($result, 0, 6) === 'error:') {
+            return substr($result, 6);
+        }
+        if (is_string($result) && $result !== '') {
+            $saved[] = $result;
+        }
+    }
+
+    return $saved;
+}
+
+function has_uploaded_file_set($files): bool
+{
+    if (!is_array($files) || !isset($files['tmp_name']) || !is_array($files['tmp_name'])) {
+        return false;
+    }
+
+    foreach ($files['tmp_name'] as $tmpName) {
+        if (is_string($tmpName) && $tmpName !== '' && is_uploaded_file($tmpName)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+function save_uploaded_image(array $file, string $folder, string $prefix, bool $allowSvg): string
+{
+    if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+        return 'error:One of the uploaded images could not be received. Please try a smaller file.';
+    }
+
+    if ((int)($file['size'] ?? 0) > 5 * 1024 * 1024) {
+        return 'error:Uploaded images must be 5MB or smaller.';
+    }
+
+    $tmp = (string)($file['tmp_name'] ?? '');
+    if ($tmp === '' || !is_uploaded_file($tmp)) {
+        return 'error:The uploaded image was not recognised by the server.';
+    }
+
+    $mime = mime_content_type($tmp) ?: '';
+    $allowed = [
+        'image/jpeg' => 'jpg',
+        'image/png' => 'png',
+        'image/webp' => 'webp',
+    ];
+    if ($allowSvg) {
+        $allowed['image/svg+xml'] = 'svg';
+    }
+
+    if (!isset($allowed[$mime])) {
+        return 'error:Please upload JPG, PNG or WebP images. SVG is allowed for logos only.';
+    }
+
+    $filename = $prefix . '-' . bin2hex(random_bytes(4)) . '.' . $allowed[$mime];
+    $target = $folder . '/' . $filename;
+
+    if (!move_uploaded_file($tmp, $target)) {
+        return 'error:The server could not save an uploaded image.';
+    }
+
+    chmod($target, 0644);
+    return $filename;
+}
 
 function dispatch_site_factory(array $factory, string $requestJson, int $ttl)
 {
