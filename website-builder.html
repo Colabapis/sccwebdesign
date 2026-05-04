@@ -51,6 +51,7 @@
               <div class="field"><label for="business_name">Business name</label><input id="business_name" name="business_name" required></div>
               <div class="field"><label for="email">Email</label><input id="email" name="email" type="email" required></div>
               <div class="field"><label for="location">Location</label><input id="location" name="location" placeholder="Brighton, Sussex, UK" required></div>
+              <div class="field"><label for="live_domain">Live website domain</label><input id="live_domain" name="live_domain" placeholder="example.co.uk"></div>
               <div class="field"><label for="business_type">Business type</label><select id="business_type" name="business_type" required><option value="">Select one</option><option value="tree_surgeon">Tree surgeon</option><option value="electrician">Electrician</option><option value="plumber">Plumber</option><option value="accountant">Accountant</option><option value="hairdresser">Hairdresser</option><option value="travel_agency">Travel agency</option><option value="camping_glamping">Camping or glamping</option><option value="professional_service">Professional service</option><option value="local_service">Other local service</option></select></div>
             </div>
             <div class="form-section">
@@ -62,6 +63,7 @@
             <div class="form-section">
               <h2>Assets And Output</h2>
               <fieldset class="checkbox-grid"><legend>Assets</legend><label><input type="checkbox" name="assets" value="generate_logo" checked> Generate logo draft</label><label><input type="checkbox" name="assets" value="favicons" checked> Favicon and touch icons</label><label><input type="checkbox" name="assets" value="free_images" checked> Free stock images</label><label><input type="checkbox" name="assets" value="analytics_placeholder"> Analytics placeholder</label></fieldset>
+              <div class="field"><label for="analytics_measurement_id">Google Analytics ID</label><input id="analytics_measurement_id" name="analytics_measurement_id" placeholder="G-XXXXXXXXXX"></div>
               <div class="field"><label for="output">Preferred output</label><select id="output" name="output"><option value="temporary_preview">15-minute preview link</option><option value="preview">Private preview folder</option><option value="zip">ZIP package</option><option value="review_first">Review with SCC first</option></select></div>
               <div class="field"><label for="preview_ttl_minutes">Preview lifetime</label><select id="preview_ttl_minutes" name="preview_ttl_minutes"><option value="15">15 minutes</option><option value="30">30 minutes</option><option value="60">60 minutes</option></select></div>
               <div class="field"><label for="notes">Notes</label><textarea id="notes" name="notes" placeholder="Tell us about services, tone, competitors, or must-have features."></textarea></div>
