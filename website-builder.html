@@ -33,7 +33,14 @@
         <div class="wrap">
           <p class="eyebrow">SCC Site Factory</p>
           <h1>Build a website brief in minutes.</h1>
-          <p>Choose the business type, style, pages and asset options. The form creates a structured request ready for SCC's private website factory workflow.</p>
+          <p>Choose the business type, style, pages and asset options. This page prepares the brief; the private SCC Site Factory repo then generates the working preview.</p>
+        </div>
+      </section>
+      <section class="builder-steps">
+        <div class="wrap">
+          <article><strong>01</strong><h2>Complete the brief</h2><p>Use the form or a pre-filled link like the one you tested.</p></article>
+          <article><strong>02</strong><h2>Prepare request</h2><p>The page creates a structured JSON request and email draft.</p></article>
+          <article><strong>03</strong><h2>Generate preview</h2><p>SCC runs the request through the private GitHub Site Factory workflow.</p></article>
         </div>
       </section>
       <section class="section" id="builder">
@@ -62,11 +69,13 @@
             <p class="form-note" data-builder-note></p>
           </form>
           <aside class="builder-output">
+            <div class="status-pill" data-builder-status>Waiting for brief</div>
             <h2>Automation Request</h2>
-            <p>This preview shows the structured request that SCC can feed into the private Site Factory workflow. No secrets are exposed in this page.</p>
+            <p>This preview shows the structured request that SCC can feed into the private Site Factory workflow. Preparing the request does not publish anything automatically.</p>
             <pre data-builder-output>{
   "status": "Waiting for brief"
 }</pre>
+            <button class="button secondary" type="button" data-builder-copy>Copy request</button>
             <a class="button secondary" href="mailto:hello@sccwebdesign.co.uk" data-builder-email>Email this request</a>
           </aside>
         </div>

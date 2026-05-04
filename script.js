@@ -84,13 +84,25 @@ function initSiteBuilderForm() {
   const output = document.querySelector("[data-builder-output]");
   const emailLink = document.querySelector("[data-builder-email]");
   const note = document.querySelector("[data-builder-note]");
+  const status = document.querySelector("[data-builder-status]");
+  const copyButton = document.querySelector("[data-builder-copy]");
 
-  form.addEventListener("submit", (event) => {
-    event.preventDefault();
+  function setFieldFromQuery(data) {
+    for (const [key, value] of data.entries()) {
+      const controls = Array.from(form.elements).filter((control) => control.name === key);
+      controls.forEach((control) => {
+        if (control.type === "checkbox") {
+          control.checked = data.getAll(key).includes(control.value);
+        } else {
+          control.value = value;
+        }
+      });
+    }
+  }
+
+  function buildRequest() {
     const data = new FormData(form);
-    const pages = data.getAll("pages");
-    const assets = data.getAll("assets");
-    const request = {
+    return {
       job: "generate_static_website",
       business_name: String(data.get("business_name") || "").trim(),
       email: String(data.get("email") || "").trim(),
@@ -98,24 +110,51 @@ function initSiteBuilderForm() {
       business_type: data.get("business_type"),
       style: data.get("style"),
       colour: data.get("colour"),
-      pages,
-      assets,
+      pages: data.getAll("pages"),
+      assets: data.getAll("assets"),
       output: data.get("output"),
       notes: String(data.get("notes") || "").trim(),
       generated_at: new Date().toISOString()
     };
+  }
+
+  function renderRequest(request, message) {
+    const json = JSON.stringify(request, null, 2);
+    output.textContent = json;
+    const subject = encodeURIComponent(`Website factory request: ${request.business_name || "New website"}`);
+    const body = encodeURIComponent(`Please generate a website from this structured request:\n\n${json}`);
+    emailLink.href = `mailto:hello@sccwebdesign.co.uk?subject=${subject}&body=${body}`;
+    if (status) status.textContent = "Request prepared";
+    if (note) note.textContent = message;
+  }
+
+  const query = new URLSearchParams(window.location.search);
+  if ([...query.keys()].length) {
+    setFieldFromQuery(query);
+    const request = buildRequest();
+    renderRequest(request, "Loaded your link and prepared the request. It has not been sent or published yet.");
+  }
+
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const request = buildRequest();
 
     if (!request.business_name || !request.email || !request.location || !request.business_type) {
       note.textContent = "Please complete the business name, email, location and business type.";
+      if (status) status.textContent = "Needs details";
       return;
     }
 
-    const json = JSON.stringify(request, null, 2);
-    output.textContent = json;
-    const subject = encodeURIComponent(`Website factory request: ${request.business_name}`);
-    const body = encodeURIComponent(`Please generate a website from this structured request:\n\n${json}`);
-    emailLink.href = `mailto:hello@sccwebdesign.co.uk?subject=${subject}&body=${body}`;
-    note.textContent = "Your structured request is ready. Use the email button to send it to SCC.";
+    renderRequest(request, "Your structured request is ready. Use the email button to send it to SCC.");
+  });
+
+  copyButton?.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(output.textContent);
+      if (note) note.textContent = "Request copied to your clipboard.";
+    } catch {
+      if (note) note.textContent = "Copy failed. You can still select the request text manually.";
+    }
   });
 }
 
