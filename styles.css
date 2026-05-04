@@ -729,6 +729,13 @@ h1 {
   font-weight: 800;
 }
 
+.builder-email-note {
+  margin: 14px 0 0;
+  color: #526078;
+  line-height: 1.6;
+  font-size: 0.95rem;
+}
+
 .contact-card {
   display: grid;
   gap: 20px;

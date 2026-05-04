@@ -86,6 +86,7 @@ function initSiteBuilderForm() {
   const note = document.querySelector("[data-builder-note]");
   const status = document.querySelector("[data-builder-status]");
   const copyButton = document.querySelector("[data-builder-copy]");
+  const emailNote = document.querySelector("[data-builder-email-note]");
 
   function setFieldFromQuery(data) {
     for (const [key, value] of data.entries()) {
@@ -131,6 +132,9 @@ function initSiteBuilderForm() {
     emailLink.href = `mailto:hello@sccwebdesign.co.uk?subject=${subject}&body=${body}`;
     if (status) status.textContent = "Request prepared";
     if (note) note.textContent = message;
+    if (emailNote) {
+      emailNote.textContent = `When SCC runs this request, the preview can be available shortly and expire after ${request.preview_ttl_minutes || 15} minutes.`;
+    }
   }
 
   const query = new URLSearchParams(window.location.search);
@@ -159,6 +163,23 @@ function initSiteBuilderForm() {
       if (note) note.textContent = "Request copied to your clipboard.";
     } catch {
       if (note) note.textContent = "Copy failed. You can still select the request text manually.";
+    }
+  });
+
+  emailLink?.addEventListener("click", () => {
+    const request = buildRequest();
+    if (!request.business_name || !request.email || !request.location || !request.business_type) {
+      if (emailNote) emailNote.textContent = "Complete the required brief details before sending the request.";
+      if (status) status.textContent = "Needs details";
+      return;
+    }
+
+    renderRequest(
+      request,
+      `Email draft opening. Once SCC receives and runs the request, the preview can be available shortly and expire after ${request.preview_ttl_minutes || 15} minutes.`
+    );
+    if (emailNote) {
+      emailNote.textContent = "If your email app did not open, use Copy request and send it to hello@sccwebdesign.co.uk.";
     }
   });
 }
