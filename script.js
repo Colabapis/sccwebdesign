@@ -125,8 +125,10 @@ function initSiteBuilderForm() {
       email: String(data.get("email") || "").trim(),
       location: String(data.get("location") || "").trim(),
       live_domain: String(data.get("live_domain") || "").trim(),
+      domain_extension: data.get("domain_extension"),
       business_type: data.get("business_type"),
       style: data.get("style"),
+      tone: data.get("tone"),
       colour: data.get("colour"),
       banner_style: data.get("banner_style"),
       banner_image_count: Number(data.get("banner_image_count") || 3),
@@ -138,14 +140,30 @@ function initSiteBuilderForm() {
         .split(/\r?\n/)
         .map((url) => url.trim())
         .filter(Boolean)
-        .slice(0, 10),
-      client_image_uploads: imageFiles.map((file) => file.name).slice(0, 10),
+        .slice(0, 20),
+      client_image_uploads: imageFiles.map((file) => file.name).slice(0, 20),
       analytics_measurement_id: String(data.get("analytics_measurement_id") || "").trim(),
       output: data.get("output"),
       preview_ttl_minutes: Number(data.get("preview_ttl_minutes") || 15),
+      social_links: String(data.get("social_links") || "")
+        .split(/\r?\n/)
+        .map((url) => url.trim())
+        .filter(Boolean),
       notes: String(data.get("notes") || "").trim(),
       generated_at: new Date().toISOString()
     };
+  }
+
+  function applyBusinessDefaults() {
+    const businessType = form.elements.business_type?.value;
+    const pages = new Set(["tree_surgeon", "plumber", "electrician", "landscaping", "roofing", "pest_control", "car_garage"]);
+    if (!pages.has(businessType)) return;
+    ["gallery", "reviews"].forEach((page) => {
+      const checkbox = form.querySelector(`input[name="pages"][value="${page}"]`);
+      if (checkbox) checkbox.checked = true;
+    });
+    const tone = form.elements.tone;
+    if (tone && businessType === "tree_surgeon") tone.value = "rugged_industrial";
   }
 
   function renderRequest(request, message) {
@@ -172,6 +190,7 @@ function initSiteBuilderForm() {
 
   form.addEventListener("submit", (event) => {
     event.preventDefault();
+    applyBusinessDefaults();
     const request = buildRequest();
 
     if (!request.business_name || !request.email || !request.location || !request.business_type) {
@@ -194,6 +213,7 @@ function initSiteBuilderForm() {
 
   emailLink?.addEventListener("click", async (event) => {
     event.preventDefault();
+    applyBusinessDefaults();
     const request = buildRequest();
     if (!request.business_name || !request.email || !request.location || !request.business_type) {
       if (emailNote) emailNote.textContent = "Complete the required brief details before sending the request.";
@@ -232,6 +252,8 @@ function initSiteBuilderForm() {
       window.location.href = `mailto:scottchowen@gmail.com?subject=${subject}&body=${body}`;
     }
   });
+
+  form.elements.business_type?.addEventListener("change", applyBusinessDefaults);
 }
 
 document.addEventListener("DOMContentLoaded", () => {

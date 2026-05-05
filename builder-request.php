@@ -103,8 +103,10 @@ function read_request_payload(): ?array
             'email' => trim((string)($_POST['email'] ?? '')),
             'location' => trim((string)($_POST['location'] ?? '')),
             'live_domain' => trim((string)($_POST['live_domain'] ?? '')),
+            'domain_extension' => trim((string)($_POST['domain_extension'] ?? 'co.uk')),
             'business_type' => trim((string)($_POST['business_type'] ?? '')),
             'style' => trim((string)($_POST['style'] ?? '')),
+            'tone' => trim((string)($_POST['tone'] ?? 'professional')),
             'colour' => trim((string)($_POST['colour'] ?? '')),
             'banner_style' => trim((string)($_POST['banner_style'] ?? '')),
             'banner_image_count' => (int)($_POST['banner_image_count'] ?? 3),
@@ -115,6 +117,7 @@ function read_request_payload(): ?array
             'analytics_measurement_id' => trim((string)($_POST['analytics_measurement_id'] ?? '')),
             'output' => trim((string)($_POST['output'] ?? 'temporary_preview')),
             'preview_ttl_minutes' => (int)($_POST['preview_ttl_minutes'] ?? 15),
+            'social_links' => preg_split('/\r\n|\r|\n/', (string)($_POST['social_links'] ?? '')) ?: [],
             'notes' => trim((string)($_POST['notes'] ?? '')),
             'generated_at' => gmdate('c'),
         ];
@@ -149,12 +152,12 @@ function attach_uploaded_assets(array &$request)
         if (is_string($logo) && substr($logo, 0, 6) === 'error:') {
             return substr($logo, 6);
         }
-        if (is_string($logo) && $logo !== '') {
-            $request['logo_url'] = $baseUrl . '/' . $logo;
+        if (is_array($logo) && !empty($logo['filename'])) {
+            $request['logo_url'] = $baseUrl . '/' . $logo['filename'];
         }
     }
 
-    $uploadedImages = save_uploaded_image_set($_FILES['client_images'] ?? null, $folder, 10);
+    $uploadedImages = save_uploaded_image_set($_FILES['client_images'] ?? null, $folder, 20);
     if (is_string($uploadedImages)) {
         return $uploadedImages;
     }
@@ -163,11 +166,24 @@ function attach_uploaded_assets(array &$request)
         $request['client_image_urls'] = [];
     }
 
-    foreach ($uploadedImages as $imageName) {
-        array_unshift($request['client_image_urls'], $baseUrl . '/' . $imageName);
+    if (!isset($request['client_image_meta']) || !is_array($request['client_image_meta'])) {
+        $request['client_image_meta'] = [];
     }
 
-    $request['client_image_urls'] = array_slice(array_values(array_filter($request['client_image_urls'])), 0, 10);
+    foreach (array_reverse($uploadedImages) as $image) {
+        $url = $baseUrl . '/' . $image['filename'];
+        array_unshift($request['client_image_urls'], $url);
+        array_unshift($request['client_image_meta'], [
+            'filename' => $image['original_name'],
+            'url' => $url,
+            'width' => $image['width'],
+            'height' => $image['height'],
+            'aspect_ratio' => $image['aspect_ratio'],
+        ]);
+    }
+
+    $request['client_image_urls'] = array_slice(array_values(array_filter($request['client_image_urls'])), 0, 20);
+    $request['client_image_meta'] = array_slice(array_values(array_filter($request['client_image_meta'])), 0, 20);
     unset($request['logo_upload'], $request['client_image_uploads']);
 
     return true;
@@ -223,7 +239,7 @@ function save_uploaded_image_set($files, string $folder, int $limit)
         if (is_string($result) && substr($result, 0, 6) === 'error:') {
             return substr($result, 6);
         }
-        if (is_string($result) && $result !== '') {
+        if (is_array($result) && $result !== []) {
             $saved[] = $result;
         }
     }
@@ -246,7 +262,7 @@ function has_uploaded_file_set($files): bool
     return false;
 }
 
-function save_uploaded_image(array $file, string $folder, string $prefix, bool $allowSvg): string
+function save_uploaded_image(array $file, string $folder, string $prefix, bool $allowSvg)
 {
     if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
         return 'error:One of the uploaded images could not be received. Please try a smaller file.';
@@ -275,6 +291,14 @@ function save_uploaded_image(array $file, string $folder, string $prefix, bool $
         return 'error:Please upload JPG, PNG or WebP images. SVG is allowed for logos only.';
     }
 
+    $dimensions = [null, null];
+    if ($mime !== 'image/svg+xml') {
+        $dimensions = getimagesize($tmp);
+        if ($dimensions === false) {
+            return 'error:The uploaded image dimensions could not be read.';
+        }
+    }
+
     $filename = $prefix . '-' . bin2hex(random_bytes(4)) . '.' . $allowed[$mime];
     $target = $folder . '/' . $filename;
 
@@ -283,7 +307,13 @@ function save_uploaded_image(array $file, string $folder, string $prefix, bool $
     }
 
     chmod($target, 0644);
-    return $filename;
+    return [
+        'filename' => $filename,
+        'original_name' => basename((string)($file['name'] ?? $filename)),
+        'width' => $dimensions[0] ? (int)$dimensions[0] : null,
+        'height' => $dimensions[1] ? (int)$dimensions[1] : null,
+        'aspect_ratio' => $dimensions[1] ? round($dimensions[0] / $dimensions[1], 3) : null,
+    ];
 }
 
 function dispatch_site_factory(array $factory, string $requestJson, int $ttl)
