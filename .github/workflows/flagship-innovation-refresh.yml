@@ -58,8 +58,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: npm
-          cache-dependency-path: /dev/null
 
       - name: Validate source HTML
         shell: bash
@@ -98,7 +96,7 @@ jobs:
         run: |
           set -euo pipefail
           python - <<'PY'
-          import json, urllib.request, urllib.error, datetime
+          import json, urllib.request, datetime
           urls = [
               'https://treevolution.uk/',
               'https://leweslive.co.uk/',
