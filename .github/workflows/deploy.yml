@@ -114,7 +114,7 @@ jobs:
           "${SSH_BASE[@]}" "find '$TARGET' -maxdepth 1 -mindepth 1 ! -name '_backups' -exec rm -rf {} +"
 
           echo "Uploading SCC Web Design files..."
-          rsync -az --delete -e "$RSYNC_RSH" _deploy/ "$SSH_USERNAME@$SSH_HOST:$TARGET/"
+          rsync -az --delete --exclude '_backups/' -e "$RSYNC_RSH" _deploy/ "$SSH_USERNAME@$SSH_HOST:$TARGET/"
 
           echo "Listing deployed files..."
           "${SSH_BASE[@]}" "find '$TARGET' -maxdepth 2 -type f | sed 's#^#DEPLOYED #' | head -120"
