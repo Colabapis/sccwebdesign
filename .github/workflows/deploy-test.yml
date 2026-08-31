@@ -1,0 +1,121 @@
+name: Deploy SCC Web Design test
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - flagship-clean-rebuild
+
+concurrency:
+  group: sccwebdesign-test-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy-test:
+    name: Upload flagship rebuild to Hostinger test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate required secrets
+        shell: bash
+        env:
+          SSH_HOST: ${{ secrets.SCCWEBDESIGN_SSH_HOST }}
+          SSH_USERNAME: ${{ secrets.SCCWEBDESIGN_SSH_USERNAME }}
+          SSH_PASSWORD: ${{ secrets.SCCWEBDESIGN_SSH_PASSWORD }}
+          SSH_PORT: ${{ secrets.SCCWEBDESIGN_SSH_PORT }}
+          TARGET: ${{ secrets.SCCWEBDESIGNTEST_HOSTINGER_PUBLIC_HTML_DIR }}
+        run: |
+          set -euo pipefail
+          missing=0
+          for var in SSH_HOST SSH_USERNAME SSH_PASSWORD SSH_PORT TARGET; do
+            if [ -z "${!var:-}" ]; then
+              echo "Missing required secret: $var"
+              missing=1
+            fi
+          done
+          [ "$missing" -eq 0 ]
+
+      - name: Confirm isolated test target
+        shell: bash
+        env:
+          TARGET: ${{ secrets.SCCWEBDESIGNTEST_HOSTINGER_PUBLIC_HTML_DIR }}
+        run: |
+          set -euo pipefail
+          case "$TARGET" in
+            */domains/sccwebdesign.co.uk/public_html/test|*/domains/sccwebdesign.co.uk/public_html/test/)
+              echo "Confirmed SCC Web Design test target."
+              ;;
+            *)
+              echo "Refusing to deploy: test target is not the expected sccwebdesign.co.uk/public_html/test path."
+              exit 1
+              ;;
+          esac
+
+      - name: Prepare clean test upload
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf _deploy
+          mkdir -p _deploy
+          rsync -a ./ _deploy/ \
+            --exclude '.git/' \
+            --exclude '.github/' \
+            --exclude '_deploy/' \
+            --exclude '*.zip' \
+            --exclude '*.log' \
+            --exclude 'node_modules/' \
+            --exclude '.DS_Store'
+
+          test -f _deploy/index.html
+
+          cat > _deploy/robots.txt <<'EOF'
+          User-agent: *
+          Disallow: /
+          EOF
+
+          cat > _deploy/.htaccess <<'EOF'
+          <IfModule mod_headers.c>
+            Header always set X-Robots-Tag "noindex, nofollow, noarchive"
+          </IfModule>
+          Options -Indexes
+          EOF
+
+      - name: Install SSH tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y sshpass rsync
+
+      - name: Deploy to Hostinger test
+        shell: bash
+        env:
+          SSHPASS: ${{ secrets.SCCWEBDESIGN_SSH_PASSWORD }}
+          SSH_HOST: ${{ secrets.SCCWEBDESIGN_SSH_HOST }}
+          SSH_USERNAME: ${{ secrets.SCCWEBDESIGN_SSH_USERNAME }}
+          SSH_PORT: ${{ secrets.SCCWEBDESIGN_SSH_PORT }}
+          TARGET: ${{ secrets.SCCWEBDESIGNTEST_HOSTINGER_PUBLIC_HTML_DIR }}
+        run: |
+          set -euo pipefail
+          SSH_BASE=(sshpass -e ssh -p "$SSH_PORT" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=30 "$SSH_USERNAME@$SSH_HOST")
+          RSYNC_RSH="sshpass -e ssh -p $SSH_PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=30"
+
+          "${SSH_BASE[@]}" "mkdir -p '$TARGET'"
+          "${SSH_BASE[@]}" "find '$TARGET' -maxdepth 1 -mindepth 1 -exec rm -rf {} +"
+          rsync -az --delete -e "$RSYNC_RSH" _deploy/ "$SSH_USERNAME@$SSH_HOST:$TARGET/"
+
+      - name: Verify test homepage
+        shell: bash
+        run: |
+          set -euo pipefail
+          sleep 5
+          code=$(curl -L -s -o /tmp/test-home.html -w "%{http_code}" "https://sccwebdesign.co.uk/test/" || true)
+          echo "HTTP status: $code"
+          test "$code" = "200"
+          grep -qi "SCC Web Design" /tmp/test-home.html
+          headers=$(curl -L -sI "https://sccwebdesign.co.uk/test/" || true)
+          echo "$headers"
+          echo "$headers" | grep -qi "X-Robots-Tag: noindex"
