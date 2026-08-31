@@ -1,0 +1,218 @@
+name: Flagship innovation refresh
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: URL to audit
+        required: false
+        default: https://sccwebdesign.co.uk/test/
+      strict:
+        description: Fail on audit regressions
+        required: false
+        type: boolean
+        default: false
+  schedule:
+    - cron: '17 4 * * 1'
+  repository_dispatch:
+    types: [flagship_refresh]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sccwebdesign-flagship-innovation-refresh
+  cancel-in-progress: true
+
+jobs:
+  audit-and-refresh:
+    name: Audit flagship and build evidence pack
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DEFAULT_TARGET_URL: https://sccwebdesign.co.uk/test/
+
+    steps:
+      - name: Checkout current flagship source
+        uses: actions/checkout@v4
+
+      - name: Resolve audit target
+        id: target
+        shell: bash
+        run: |
+          set -euo pipefail
+          requested="${{ github.event.inputs.target_url || '' }}"
+          if [ -n "$requested" ]; then
+            target="$requested"
+          else
+            target="$DEFAULT_TARGET_URL"
+          fi
+          case "$target" in
+            https://sccwebdesign.co.uk/*|https://www.sccwebdesign.co.uk/*) ;;
+            *) echo "Refusing non-SCC target: $target"; exit 1 ;;
+          esac
+          echo "url=$target" >> "$GITHUB_OUTPUT"
+          echo "Auditing $target"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Validate source HTML
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx --yes html-validate@9 index.html
+          if grep -Eq 'href="(styles|next|typography-fix)\.css' index.html; then
+            echo "Legacy homepage CSS dependency detected."
+            exit 1
+          fi
+
+      - name: Verify flagship source contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f flagship.css
+          test -f flagship.js
+          grep -q 'flagship.css' index.html
+          grep -q 'flagship.js' index.html
+          grep -qi 'prefers-reduced-motion' flagship.css
+          grep -qi 'aria-' index.html
+
+      - name: Check live/test response and security headers
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p audit
+          target='${{ steps.target.outputs.url }}'
+          curl -L --fail --silent --show-error --max-time 30 -D audit/headers.txt -o audit/page.html "$target"
+          printf '{\n  "target": "%s",\n  "checked_at": "%s",\n  "commit": "%s"\n}\n' \
+            "$target" "$(date -u +%FT%TZ)" "$GITHUB_SHA" > audit/build-meta.json
+          grep -i '<title' audit/page.html | head -1 || true
+
+      - name: Check public project availability
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, urllib.request, datetime
+          urls = [
+              'https://treevolution.uk/',
+              'https://leweslive.co.uk/',
+              'https://sccnexus.co.uk/',
+              'https://crsrendering.co.uk/',
+              'https://www.pearlcarpentry.co.uk/'
+          ]
+          results=[]
+          for url in urls:
+              req=urllib.request.Request(url, headers={'User-Agent':'SCCWebDesign-Audit/1.0'})
+              try:
+                  with urllib.request.urlopen(req, timeout=15) as r:
+                      results.append({'url':url,'status':r.status,'final_url':r.geturl()})
+              except Exception as e:
+                  results.append({'url':url,'status':None,'error':str(e)[:240]})
+          with open('audit/project-health.json','w') as f:
+              json.dump({'checked_at':datetime.datetime.now(datetime.UTC).isoformat(), 'projects':results}, f, indent=2)
+          PY
+
+      - name: Install browser audit tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save lighthouse@12 pa11y@9
+
+      - name: Run Lighthouse evidence audit
+        shell: bash
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          target='${{ steps.target.outputs.url }}'
+          npx lighthouse "$target" \
+            --chrome-flags='--headless --no-sandbox --disable-gpu' \
+            --only-categories=performance,accessibility,best-practices,seo \
+            --output=json \
+            --output-path=audit/lighthouse.json \
+            --quiet
+
+      - name: Run accessibility evidence audit
+        shell: bash
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          target='${{ steps.target.outputs.url }}'
+          npx pa11y "$target" --reporter json > audit/pa11y.json
+
+      - name: Summarise audit evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, pathlib, datetime
+          out=[]
+          out.append('# SCC Web Design flagship innovation audit')
+          out.append('')
+          out.append(f'Generated: {datetime.datetime.now(datetime.UTC).isoformat()}')
+          out.append('')
+          lp=pathlib.Path('audit/lighthouse.json')
+          if lp.exists():
+              data=json.loads(lp.read_text())
+              out.append('## Lighthouse')
+              for key,cat in data.get('categories',{}).items():
+                  score=cat.get('score')
+                  out.append(f'- {key}: {round(score*100) if isinstance(score,(int,float)) else "n/a"}')
+              out.append('')
+          pp=pathlib.Path('audit/pa11y.json')
+          if pp.exists():
+              try:
+                  issues=json.loads(pp.read_text())
+                  out.append(f'## Accessibility findings: {len(issues)}')
+              except Exception:
+                  out.append('## Accessibility findings: report unreadable')
+              out.append('')
+          out.append('## Release discipline')
+          out.append('- This workflow audits and refreshes evidence only.')
+          out.append('- It does not silently invent or publish new design changes.')
+          out.append('- Interactive/design innovation should arrive through a reviewable branch/PR and pass the flagship acceptance gate before production.')
+          pathlib.Path('audit/summary.md').write_text('\n'.join(out)+'\n')
+          PY
+          cat audit/summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Enforce strict mode when requested
+        if: ${{ github.event.inputs.strict == 'true' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, pathlib, sys
+          failures=[]
+          lp=pathlib.Path('audit/lighthouse.json')
+          if not lp.exists():
+              failures.append('Lighthouse report missing')
+          else:
+              cats=json.loads(lp.read_text()).get('categories',{})
+              floors={'performance':0.80,'accessibility':0.95,'best-practices':0.90,'seo':0.95}
+              for name,floor in floors.items():
+                  score=cats.get(name,{}).get('score')
+                  if score is None or score < floor:
+                      failures.append(f'{name} score {score} below {floor}')
+          pp=pathlib.Path('audit/pa11y.json')
+          if pp.exists():
+              try:
+                  issues=json.loads(pp.read_text())
+                  errors=[i for i in issues if i.get('type')=='error']
+                  if errors:
+                      failures.append(f'{len(errors)} pa11y errors')
+              except Exception:
+                  failures.append('Pa11y report unreadable')
+          if failures:
+              print('\n'.join(failures))
+              sys.exit(1)
+          PY
+
+      - name: Upload external-audit evidence pack
+        uses: actions/upload-artifact@v4
+        with:
+          name: sccwebdesign-flagship-audit-${{ github.run_number }}
+          path: audit/
+          retention-days: 30
