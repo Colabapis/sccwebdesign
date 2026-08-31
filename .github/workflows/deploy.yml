@@ -73,11 +73,7 @@ jobs:
             --exclude 'node_modules/' \
             --exclude '.DS_Store'
 
-          if [ ! -f _deploy/index.html ]; then
-            echo "Refusing to deploy: index.html was not found in the repository root."
-            exit 1
-          fi
-
+          test -f _deploy/index.html
           echo "Prepared upload folder:"
           find _deploy -maxdepth 2 -type f | sort | sed 's#^_deploy/##' | head -200
 
@@ -88,7 +84,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y sshpass rsync
 
-      - name: Deploy to Hostinger
+      - name: Test Hostinger SSH connection
         shell: bash
         env:
           SSHPASS: ${{ secrets.SCCWEBDESIGN_SSH_PASSWORD }}
@@ -98,26 +94,74 @@ jobs:
           TARGET: ${{ secrets.SCCWEBDESIGN_HOSTINGER_PUBLIC_HTML_DIR }}
         run: |
           set -euo pipefail
+          sshpass -e ssh -p "$SSH_PORT" \
+            -o StrictHostKeyChecking=no \
+            -o UserKnownHostsFile=/dev/null \
+            -o ConnectTimeout=30 \
+            "$SSH_USERNAME@$SSH_HOST" \
+            "echo SSH_OK && test -n '$TARGET' && pwd && whoami"
 
-          SSH_BASE=(sshpass -e ssh -p "$SSH_PORT" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=30 "$SSH_USERNAME@$SSH_HOST")
-          RSYNC_RSH="sshpass -e ssh -p $SSH_PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=30"
-
-          echo "Testing SSH connection..."
-          "${SSH_BASE[@]}" "echo SSH_OK && pwd && whoami"
-
-          echo "Creating target and backup folder..."
-          "${SSH_BASE[@]}" "mkdir -p '$TARGET' '$TARGET/_backups'"
+      - name: Create bounded production backup
+        shell: bash
+        env:
+          SSHPASS: ${{ secrets.SCCWEBDESIGN_SSH_PASSWORD }}
+          SSH_HOST: ${{ secrets.SCCWEBDESIGN_SSH_HOST }}
+          SSH_USERNAME: ${{ secrets.SCCWEBDESIGN_SSH_USERNAME }}
+          SSH_PORT: ${{ secrets.SCCWEBDESIGN_SSH_PORT }}
+          TARGET: ${{ secrets.SCCWEBDESIGN_HOSTINGER_PUBLIC_HTML_DIR }}
+        run: |
+          set -euo pipefail
           BACKUP_NAME="backup-$(date -u +%Y%m%d-%H%M%S)"
-          "${SSH_BASE[@]}" "mkdir -p '$TARGET/_backups/$BACKUP_NAME' && find '$TARGET' -maxdepth 1 -mindepth 1 ! -name '_backups' -exec cp -a {} '$TARGET/_backups/$BACKUP_NAME/' \; || true"
+          sshpass -e ssh -p "$SSH_PORT" \
+            -o StrictHostKeyChecking=no \
+            -o UserKnownHostsFile=/dev/null \
+            "$SSH_USERNAME@$SSH_HOST" \
+            "set -e; mkdir -p '$TARGET' '$TARGET/_backups/$BACKUP_NAME'; find '$TARGET' -maxdepth 1 -mindepth 1 ! -name '_backups' -exec cp -a {} '$TARGET/_backups/$BACKUP_NAME/' \\; ; ls -1dt '$TARGET'/_backups/backup-* 2>/dev/null | tail -n +6 | xargs -r rm -rf"
 
-          echo "Cleaning current live files but preserving _backups..."
-          "${SSH_BASE[@]}" "find '$TARGET' -maxdepth 1 -mindepth 1 ! -name '_backups' -exec rm -rf {} +"
+      - name: Clean current live files
+        shell: bash
+        env:
+          SSHPASS: ${{ secrets.SCCWEBDESIGN_SSH_PASSWORD }}
+          SSH_HOST: ${{ secrets.SCCWEBDESIGN_SSH_HOST }}
+          SSH_USERNAME: ${{ secrets.SCCWEBDESIGN_SSH_USERNAME }}
+          SSH_PORT: ${{ secrets.SCCWEBDESIGN_SSH_PORT }}
+          TARGET: ${{ secrets.SCCWEBDESIGN_HOSTINGER_PUBLIC_HTML_DIR }}
+        run: |
+          set -euo pipefail
+          sshpass -e ssh -p "$SSH_PORT" \
+            -o StrictHostKeyChecking=no \
+            -o UserKnownHostsFile=/dev/null \
+            "$SSH_USERNAME@$SSH_HOST" \
+            "find '$TARGET' -maxdepth 1 -mindepth 1 ! -name '_backups' -exec rm -rf {} +"
 
-          echo "Uploading SCC Web Design files..."
-          rsync -az --delete --exclude '_backups/' -e "$RSYNC_RSH" _deploy/ "$SSH_USERNAME@$SSH_HOST:$TARGET/"
+      - name: Upload SCC Web Design files
+        shell: bash
+        env:
+          SSHPASS: ${{ secrets.SCCWEBDESIGN_SSH_PASSWORD }}
+          SSH_HOST: ${{ secrets.SCCWEBDESIGN_SSH_HOST }}
+          SSH_USERNAME: ${{ secrets.SCCWEBDESIGN_SSH_USERNAME }}
+          SSH_PORT: ${{ secrets.SCCWEBDESIGN_SSH_PORT }}
+          TARGET: ${{ secrets.SCCWEBDESIGN_HOSTINGER_PUBLIC_HTML_DIR }}
+        run: |
+          set -euo pipefail
+          RSYNC_RSH="sshpass -e ssh -p $SSH_PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=30"
+          rsync -az --exclude '_backups/' -e "$RSYNC_RSH" _deploy/ "$SSH_USERNAME@$SSH_HOST:$TARGET/"
 
-          echo "Listing deployed files..."
-          "${SSH_BASE[@]}" "find '$TARGET' -maxdepth 2 -type f | sed 's#^#DEPLOYED #' | head -120"
+      - name: Verify remote release files
+        shell: bash
+        env:
+          SSHPASS: ${{ secrets.SCCWEBDESIGN_SSH_PASSWORD }}
+          SSH_HOST: ${{ secrets.SCCWEBDESIGN_SSH_HOST }}
+          SSH_USERNAME: ${{ secrets.SCCWEBDESIGN_SSH_USERNAME }}
+          SSH_PORT: ${{ secrets.SCCWEBDESIGN_SSH_PORT }}
+          TARGET: ${{ secrets.SCCWEBDESIGN_HOSTINGER_PUBLIC_HTML_DIR }}
+        run: |
+          set -euo pipefail
+          sshpass -e ssh -p "$SSH_PORT" \
+            -o StrictHostKeyChecking=no \
+            -o UserKnownHostsFile=/dev/null \
+            "$SSH_USERNAME@$SSH_HOST" \
+            "test -s '$TARGET/index.html' && test -s '$TARGET/studio-2026.css' && grep -q 'Design people' '$TARGET/index.html' && echo REMOTE_RELEASE_OK"
 
       - name: Check live homepage
         shell: bash
@@ -127,7 +171,8 @@ jobs:
           code=$(curl -L -s -o /tmp/sccwebdesign-home.html -w "%{http_code}" "https://sccwebdesign.co.uk/" || true)
           echo "HTTP status: $code"
           case "$code" in
-            200|301|302) echo "Live homepage responded." ;;
-            *) echo "Warning: live homepage did not return expected status yet." ;;
+            200|301|302) ;;
+            *) echo "Live homepage did not return an expected status."; exit 1 ;;
           esac
-          head -50 /tmp/sccwebdesign-home.html || true
+          grep -q "Design people" /tmp/sccwebdesign-home.html
+          echo "LIVE_RELEASE_OK"
