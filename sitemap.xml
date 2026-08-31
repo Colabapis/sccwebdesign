@@ -1,31 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://sccwebdesign.co.uk/</loc></url>
-  <url><loc>https://sccwebdesign.co.uk/contact.html</loc></url>
-  <url><loc>https://sccwebdesign.co.uk/website-builder.html</loc></url>
-  <url><loc>https://sccwebdesign.co.uk/privacy.html</loc></url>
-  <url><loc>https://sccwebdesign.co.uk/cookie-policy.html</loc></url>
-  <url><loc>https://sccwebdesign.co.uk/showcase/oasis-travel/</loc></url>
-  <url><loc>https://sccwebdesign.co.uk/showcase/oasis-travel/destinations.html</loc></url>
-  <url><loc>https://sccwebdesign.co.uk/showcase/oasis-travel/contact.html</loc></url>
-  <url><loc>https://sccwebdesign.co.uk/showcase/oasis-travel/privacy.html</loc></url>
-  <url><loc>https://sccwebdesign.co.uk/showcase/oasis-travel/cookie-policy.html</loc></url>
-  <url><loc>https://sccwebdesign.co.uk/showcase/sussex-tree-surgery/</loc></url>
-  <url><loc>https://sccwebdesign.co.uk/showcase/sussex-tree-surgery/services.html</loc></url>
-  <url><loc>https://sccwebdesign.co.uk/showcase/sussex-tree-surgery/work.html</loc></url>
-  <url><loc>https://sccwebdesign.co.uk/showcase/sussex-tree-surgery/contact.html</loc></url>
-  <url><loc>https://sccwebdesign.co.uk/showcase/sussex-tree-surgery/privacy.html</loc></url>
-  <url><loc>https://sccwebdesign.co.uk/showcase/sussex-tree-surgery/cookie-policy.html</loc></url>
-  <url><loc>https://sccwebdesign.co.uk/showcase/my-local-electrician/</loc></url>
-  <url><loc>https://sccwebdesign.co.uk/showcase/my-local-electrician/services.html</loc></url>
-  <url><loc>https://sccwebdesign.co.uk/showcase/my-local-electrician/projects.html</loc></url>
-  <url><loc>https://sccwebdesign.co.uk/showcase/my-local-electrician/contact.html</loc></url>
-  <url><loc>https://sccwebdesign.co.uk/showcase/my-local-electrician/privacy.html</loc></url>
-  <url><loc>https://sccwebdesign.co.uk/showcase/my-local-electrician/cookie-policy.html</loc></url>
-  <url><loc>https://sccwebdesign.co.uk/showcase/wilderness-camping/</loc></url>
-  <url><loc>https://sccwebdesign.co.uk/showcase/wilderness-camping/stays.html</loc></url>
-  <url><loc>https://sccwebdesign.co.uk/showcase/wilderness-camping/experience.html</loc></url>
-  <url><loc>https://sccwebdesign.co.uk/showcase/wilderness-camping/contact.html</loc></url>
-  <url><loc>https://sccwebdesign.co.uk/showcase/wilderness-camping/privacy.html</loc></url>
-  <url><loc>https://sccwebdesign.co.uk/showcase/wilderness-camping/cookie-policy.html</loc></url>
+  <url><loc>https://sccwebdesign.co.uk/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://sccwebdesign.co.uk/work.html</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://sccwebdesign.co.uk/website-builder.html</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://sccwebdesign.co.uk/contact.html</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://sccwebdesign.co.uk/privacy.html</loc><priority>0.3</priority></url>
+  <url><loc>https://sccwebdesign.co.uk/cookie-policy.html</loc><priority>0.3</priority></url>
 </urlset>
