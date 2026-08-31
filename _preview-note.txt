@@ -1,1 +1,0 @@
-SCC Web Design 2026 flagship redesign branch. Review via pull request before production merge.
