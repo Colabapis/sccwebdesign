@@ -20,12 +20,23 @@
 .case-visual.media-failed img,.site-window.media-failed img,.portfolio-card.media-failed img{display:none}
 .case-visual.media-failed:before,.site-window.media-failed:before,.portfolio-card.media-failed:before{content:'Project image temporarily unavailable';position:absolute;inset:0;display:grid;place-items:center;padding:2rem;text-align:center;color:rgba(255,255,255,.68);font-size:.72rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;z-index:1}
 
+/* Evidence-led case studies. */
+.evidence-frame.has-media{background:#0f1211}
+.evidence-frame .evidence-media{display:block;width:100%;aspect-ratio:16/10;object-fit:cover;background:#dfe3dc;border-bottom:1px solid rgba(17,21,20,.12)}
+.evidence-frame .evidence-caption{padding:13px 16px;background:#f4f1e9;color:#59645d;font-size:.72rem;line-height:1.5;border-bottom:1px solid rgba(17,21,20,.1)}
+.evidence-frame .evidence-copy.compact{min-height:240px;padding:30px}
+.case-proof{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:28px}
+.case-proof article{padding:22px;border:1px solid rgba(17,21,20,.13);border-radius:18px;background:#fff}
+.case-proof strong{display:block;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:#617068;margin-bottom:8px}
+.case-proof p{margin:0;color:#626a64;line-height:1.6}
+
 /* Slightly richer motion without turning the interface into a demo reel. */
 [data-reveal]{transform:translateY(24px) scale(.992);transition:opacity .72s cubic-bezier(.2,.8,.2,1),transform .72s cubic-bezier(.2,.8,.2,1)}
 [data-reveal].is-visible{transform:none}
 .studio-hero:after{animation:studio-grid-drift 22s linear infinite}
 @keyframes studio-grid-drift{from{background-position:0 0}to{background-position:48px 48px}}
 
+@media(max-width:900px){.case-proof{grid-template-columns:1fr}}
 @media(max-width:760px){
   .studio2026 .site-header{background:rgba(247,244,237,.94);border-bottom:1px solid rgba(17,21,20,.10);box-shadow:0 8px 28px rgba(17,21,20,.06);backdrop-filter:blur(20px) saturate(130%);-webkit-backdrop-filter:blur(20px) saturate(130%)}
   .studio2026 .site-header.is-scrolled{background:rgba(247,244,237,.97);border-bottom-color:rgba(17,21,20,.14);box-shadow:0 10px 30px rgba(17,21,20,.10)}
@@ -41,6 +52,7 @@
   .studio-hero .lead{line-height:1.55}
   .case-visual{min-height:380px}
   .portfolio-card:nth-child(n){min-height:300px}
+  .evidence-frame .evidence-copy.compact{min-height:210px;padding:24px}
 }
 
 @media(max-width:460px){
