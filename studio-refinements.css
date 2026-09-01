@@ -1,0 +1,60 @@
+/* SCC Web Design — premium refinement layer, September 2026 */
+.studio2026 .site-header{background:linear-gradient(180deg,rgba(11,14,13,.78),rgba(11,14,13,.48));border-bottom:1px solid rgba(255,255,255,.10);backdrop-filter:blur(22px) saturate(125%);-webkit-backdrop-filter:blur(22px) saturate(125%);transition:background .3s ease,border-color .3s ease,box-shadow .3s ease}
+.studio2026 .site-header.is-scrolled{background:rgba(12,15,14,.88);border-bottom-color:rgba(255,255,255,.14);box-shadow:0 12px 36px rgba(0,0,0,.16)}
+.studio2026 .brand{min-width:0;text-decoration:none}
+.studio2026 .brand img{display:block;width:136px;height:42px;object-fit:contain;border-radius:10px;background:rgba(247,244,237,.94);box-shadow:0 0 0 1px rgba(255,255,255,.14),0 8px 24px rgba(0,0,0,.12)}
+.studio2026 .nav-links a{transition:color .2s ease,opacity .2s ease,border-color .2s ease}
+.studio2026 .menu-toggle{border-radius:999px;transition:background .2s ease}
+.studio2026 .menu-toggle:hover{background:rgba(255,255,255,.07)}
+
+/* Keep large editorial sections from visually colliding. */
+.work-section,.systems,.method,.cta-stage{position:relative;isolation:isolate}
+.section-head{position:relative;z-index:2}
+.portfolio-grid{position:relative;z-index:1;isolation:isolate}
+.portfolio-card{contain:paint;isolation:isolate}
+.portfolio-card .pc-copy{max-width:min(88%,620px)}
+.case-feature{position:relative;isolation:isolate}
+.case-visual{display:block;contain:paint;isolation:isolate;box-shadow:0 18px 45px rgba(17,21,20,.08)}
+.case-visual img,.site-window img,.portfolio-card img{background:#d8dbd5}
+.case-visual.media-failed,.site-window.media-failed,.portfolio-card.media-failed{background:linear-gradient(135deg,#202521,#101312)}
+.case-visual.media-failed img,.site-window.media-failed img,.portfolio-card.media-failed img{display:none}
+.case-visual.media-failed:before,.site-window.media-failed:before,.portfolio-card.media-failed:before{content:'Project image temporarily unavailable';position:absolute;inset:0;display:grid;place-items:center;padding:2rem;text-align:center;color:rgba(255,255,255,.68);font-size:.72rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;z-index:1}
+
+/* Slightly richer motion without turning the interface into a demo reel. */
+[data-reveal]{transform:translateY(24px) scale(.992);transition:opacity .72s cubic-bezier(.2,.8,.2,1),transform .72s cubic-bezier(.2,.8,.2,1)}
+[data-reveal].is-visible{transform:none}
+.studio-hero:after{animation:studio-grid-drift 22s linear infinite}
+@keyframes studio-grid-drift{from{background-position:0 0}to{background-position:48px 48px}}
+
+@media(max-width:760px){
+  .studio2026 .site-header{background:rgba(247,244,237,.94);border-bottom:1px solid rgba(17,21,20,.10);box-shadow:0 8px 28px rgba(17,21,20,.06);backdrop-filter:blur(20px) saturate(130%);-webkit-backdrop-filter:blur(20px) saturate(130%)}
+  .studio2026 .site-header.is-scrolled{background:rgba(247,244,237,.97);border-bottom-color:rgba(17,21,20,.14);box-shadow:0 10px 30px rgba(17,21,20,.10)}
+  .studio2026 .nav{min-height:64px;width:min(var(--max),92vw);gap:14px}
+  .studio2026 .brand img{width:116px;height:36px;border-radius:8px;background:transparent;box-shadow:none;mix-blend-mode:multiply}
+  .studio2026 .menu-toggle{width:40px;height:40px}
+  .studio2026 .menu-toggle span,.studio2026 .menu-toggle span:before,.studio2026 .menu-toggle span:after{width:23px;height:2px;background:#111514;border-radius:4px}
+  .studio2026 .nav-links{top:64px;background:rgba(247,244,237,.985);border-bottom:1px solid rgba(17,21,20,.12);box-shadow:0 18px 34px rgba(17,21,20,.10)}
+  .studio2026 .nav-links a{color:#111514}
+  .studio2026 .nav-cta{border-color:rgba(17,21,20,.24)}
+  .studio-hero{padding-top:98px}
+  .studio-hero h1{margin-top:18px}
+  .studio-hero .lead{line-height:1.55}
+  .case-visual{min-height:380px}
+  .portfolio-card:nth-child(n){min-height:300px}
+}
+
+@media(max-width:460px){
+  .studio2026 .wrap,.hero-layout,.trust-row,.studio2026 .nav{width:92vw}
+  .studio2026 .brand img{width:108px;height:34px}
+  .studio-hero{padding-top:92px}
+  .studio-hero h1{font-size:clamp(3rem,14.4vw,4.65rem);line-height:.92}
+  .hero-overline{font-size:.66rem;letter-spacing:.14em}
+  .hero-actions{gap:9px}
+  .scc-btn{min-height:48px;padding-inline:17px}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .studio-hero:after{animation:none}
+  [data-reveal]{transition:none;transform:none}
+  .site-window,.case-visual img,.portfolio-card img,.scc-btn{transition:none}
+}
