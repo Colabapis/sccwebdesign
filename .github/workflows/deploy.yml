@@ -53,7 +53,6 @@ jobs:
               ;;
             *)
               echo "Refusing to deploy: SCCWEBDESIGN_HOSTINGER_PUBLIC_HTML_DIR does not contain sccwebdesign."
-              echo "Current target path ends with: ${HOSTINGER_PUBLIC_HTML_DIR: -80}"
               exit 1
               ;;
           esac
@@ -104,24 +103,21 @@ jobs:
           fetch_webp "https://treevolution.uk/assets/img/site/tree-removal-dismantling-crown.webp" "treevolution-project.webp"
           fetch_webp "https://static.wixstatic.com/media/50a7cd_b884b072773c4dca94f24efab6c373d6~mv2_d_2446_2446_s_4_2.jpg/v1/fill/w_900,h_900,al_c,q_85,enc_auto/50a7cd_b884b072773c4dca94f24efab6c373d6~mv2_d_2446_2446_s_4_2.jpg" "pelham-arms.webp"
 
-          if command -v google-chrome >/dev/null 2>&1; then
-            google-chrome --headless=new --no-sandbox --disable-gpu --hide-scrollbars --window-size=1440,1000 --screenshot=/tmp/scc-media/crs-current.png https://crsrendering.co.uk/
-            google-chrome --headless=new --no-sandbox --disable-gpu --hide-scrollbars --window-size=1440,1000 --screenshot=/tmp/scc-media/pearl-current.png https://www.pearlcarpentry.co.uk/
-          elif command -v chromium-browser >/dev/null 2>&1; then
-            chromium-browser --headless --no-sandbox --disable-gpu --hide-scrollbars --window-size=1440,1000 --screenshot=/tmp/scc-media/crs-current.png https://crsrendering.co.uk/
-            chromium-browser --headless --no-sandbox --disable-gpu --hide-scrollbars --window-size=1440,1000 --screenshot=/tmp/scc-media/pearl-current.png https://www.pearlcarpentry.co.uk/
-          else
-            echo "No headless Chrome available for evidence capture."
-            exit 1
-          fi
+          BROWSER=""
+          if command -v google-chrome >/dev/null 2>&1; then BROWSER="google-chrome --headless=new"; fi
+          if [ -z "$BROWSER" ] && command -v chromium-browser >/dev/null 2>&1; then BROWSER="chromium-browser --headless"; fi
+          if [ -z "$BROWSER" ]; then echo "No headless Chrome available for evidence capture."; exit 1; fi
+
+          $BROWSER --no-sandbox --disable-gpu --hide-scrollbars --window-size=1440,1000 --screenshot=/tmp/scc-media/crs-current.png https://crsrendering.co.uk/
+          $BROWSER --no-sandbox --disable-gpu --hide-scrollbars --window-size=1440,1000 --screenshot=/tmp/scc-media/pearl-current.png https://www.pearlcarpentry.co.uk/
+          $BROWSER --no-sandbox --disable-gpu --hide-scrollbars --window-size=1440,1000 --screenshot=/tmp/scc-media/leweslive-current.png https://leweslive.co.uk/
 
           convert /tmp/scc-media/crs-current.png -strip -quality 82 _deploy/assets/evidence/crs-current.webp
           convert /tmp/scc-media/pearl-current.png -strip -quality 82 _deploy/assets/evidence/pearl-current.webp
+          convert /tmp/scc-media/leweslive-current.png -strip -resize '1600x1600>' -quality 82 _deploy/assets/evidence/leweslive-current.webp
           test -s _deploy/assets/evidence/crs-current.webp
           test -s _deploy/assets/evidence/pearl-current.webp
-
-          echo "Vendored first-party media:"
-          find _deploy/assets/vendor _deploy/assets/evidence -type f -maxdepth 2 -print
+          test -s _deploy/assets/evidence/leweslive-current.webp
 
       - name: Test Hostinger SSH connection
         shell: bash
@@ -133,12 +129,7 @@ jobs:
           TARGET: ${{ secrets.SCCWEBDESIGN_HOSTINGER_PUBLIC_HTML_DIR }}
         run: |
           set -euo pipefail
-          sshpass -e ssh -p "$SSH_PORT" \
-            -o StrictHostKeyChecking=no \
-            -o UserKnownHostsFile=/dev/null \
-            -o ConnectTimeout=30 \
-            "$SSH_USERNAME@$SSH_HOST" \
-            "echo SSH_OK && test -n '$TARGET' && pwd && whoami"
+          sshpass -e ssh -p "$SSH_PORT" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=30 "$SSH_USERNAME@$SSH_HOST" "echo SSH_OK && test -n '$TARGET' && pwd && whoami"
 
       - name: Create bounded production backup
         shell: bash
@@ -151,11 +142,7 @@ jobs:
         run: |
           set -euo pipefail
           BACKUP_NAME="backup-$(date -u +%Y%m%d-%H%M%S)"
-          sshpass -e ssh -p "$SSH_PORT" \
-            -o StrictHostKeyChecking=no \
-            -o UserKnownHostsFile=/dev/null \
-            "$SSH_USERNAME@$SSH_HOST" \
-            "set -e; mkdir -p '$TARGET' '$TARGET/_backups/$BACKUP_NAME'; find '$TARGET' -maxdepth 1 -mindepth 1 ! -name '_backups' -exec cp -a {} '$TARGET/_backups/$BACKUP_NAME/' \\; ; ls -1dt '$TARGET'/_backups/backup-* 2>/dev/null | tail -n +6 | xargs -r rm -rf"
+          sshpass -e ssh -p "$SSH_PORT" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "$SSH_USERNAME@$SSH_HOST" "set -e; mkdir -p '$TARGET' '$TARGET/_backups/$BACKUP_NAME'; find '$TARGET' -maxdepth 1 -mindepth 1 ! -name '_backups' -exec cp -a {} '$TARGET/_backups/$BACKUP_NAME/' \\; ; ls -1dt '$TARGET'/_backups/backup-* 2>/dev/null | tail -n +6 | xargs -r rm -rf"
 
       - name: Clean current live files
         shell: bash
@@ -167,11 +154,7 @@ jobs:
           TARGET: ${{ secrets.SCCWEBDESIGN_HOSTINGER_PUBLIC_HTML_DIR }}
         run: |
           set -euo pipefail
-          sshpass -e ssh -p "$SSH_PORT" \
-            -o StrictHostKeyChecking=no \
-            -o UserKnownHostsFile=/dev/null \
-            "$SSH_USERNAME@$SSH_HOST" \
-            "find '$TARGET' -maxdepth 1 -mindepth 1 ! -name '_backups' -exec rm -rf {} +"
+          sshpass -e ssh -p "$SSH_PORT" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "$SSH_USERNAME@$SSH_HOST" "find '$TARGET' -maxdepth 1 -mindepth 1 ! -name '_backups' -exec rm -rf {} +"
 
       - name: Upload SCC Web Design files
         shell: bash
@@ -196,11 +179,7 @@ jobs:
           TARGET: ${{ secrets.SCCWEBDESIGN_HOSTINGER_PUBLIC_HTML_DIR }}
         run: |
           set -euo pipefail
-          sshpass -e ssh -p "$SSH_PORT" \
-            -o StrictHostKeyChecking=no \
-            -o UserKnownHostsFile=/dev/null \
-            "$SSH_USERNAME@$SSH_HOST" \
-            "test -s '$TARGET/index.html' && test -s '$TARGET/studio-2026.css' && test -s '$TARGET/assets/vendor/crs-hero.webp' && test -s '$TARGET/assets/evidence/crs-current.webp' && grep -q 'Design people' '$TARGET/index.html' && echo REMOTE_RELEASE_OK"
+          sshpass -e ssh -p "$SSH_PORT" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "$SSH_USERNAME@$SSH_HOST" "test -s '$TARGET/index.html' && test -s '$TARGET/studio-2026.css' && test -s '$TARGET/assets/vendor/crs-hero.webp' && test -s '$TARGET/assets/evidence/crs-current.webp' && test -s '$TARGET/assets/evidence/leweslive-current.webp' && grep -q 'Design people' '$TARGET/index.html' && echo REMOTE_RELEASE_OK"
 
       - name: Check live homepage
         shell: bash
@@ -209,9 +188,7 @@ jobs:
           sleep 5
           code=$(curl -L -s -o /tmp/sccwebdesign-home.html -w "%{http_code}" "https://sccwebdesign.co.uk/" || true)
           echo "HTTP status: $code"
-          case "$code" in
-            200|301|302) ;;
-            *) echo "Live homepage did not return an expected status."; exit 1 ;;
-          esac
+          case "$code" in 200|301|302) ;; *) echo "Live homepage did not return an expected status."; exit 1 ;; esac
           grep -q "Design people" /tmp/sccwebdesign-home.html
+          grep -q "leweslive-current.webp" /tmp/sccwebdesign-home.html
           echo "LIVE_RELEASE_OK"
