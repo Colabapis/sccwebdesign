@@ -72,17 +72,56 @@ jobs:
             --exclude '*.log' \
             --exclude 'node_modules/' \
             --exclude '.DS_Store'
-
           test -f _deploy/index.html
-          echo "Prepared upload folder:"
-          find _deploy -maxdepth 2 -type f | sort | sed 's#^_deploy/##' | head -200
 
-      - name: Install SSH tools
+      - name: Install deploy and media tools
         shell: bash
         run: |
           set -euo pipefail
           sudo apt-get update
-          sudo apt-get install -y sshpass rsync
+          sudo apt-get install -y sshpass rsync imagemagick
+
+      - name: Vendor first-party portfolio media
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p _deploy/assets/vendor _deploy/assets/evidence /tmp/scc-media
+
+          fetch_webp() {
+            url="$1"
+            out="$2"
+            tmp="/tmp/scc-media/$(basename "$out").source"
+            curl -L --fail --retry 2 --connect-timeout 15 --max-time 60 "$url" -o "$tmp"
+            convert "$tmp" -auto-orient -strip -resize '1800x1800>' -quality 82 "_deploy/assets/vendor/$out"
+            test -s "_deploy/assets/vendor/$out"
+          }
+
+          fetch_webp "https://crsrendering.co.uk/wp-content/uploads/2023/11/PORTSMOUTH-ROAD-42a.jpg" "crs-hero.webp"
+          fetch_webp "https://crsrendering.co.uk/wp-content/uploads/2015/11/3-Ab-3.jpg" "crs-project.webp"
+          fetch_webp "https://www.pearlcarpentry.co.uk/images/n4.jpg" "pearl-staircase.webp"
+          fetch_webp "https://www.pearlcarpentry.co.uk/images/n1.jpg" "pearl-kitchen.webp"
+          fetch_webp "https://treevolution.uk/assets/img/site/tree-surgeon-working-at-height.webp" "treevolution-hero.webp"
+          fetch_webp "https://treevolution.uk/assets/img/site/tree-removal-dismantling-crown.webp" "treevolution-project.webp"
+          fetch_webp "https://static.wixstatic.com/media/50a7cd_b884b072773c4dca94f24efab6c373d6~mv2_d_2446_2446_s_4_2.jpg/v1/fill/w_900,h_900,al_c,q_85,enc_auto/50a7cd_b884b072773c4dca94f24efab6c373d6~mv2_d_2446_2446_s_4_2.jpg" "pelham-arms.webp"
+
+          if command -v google-chrome >/dev/null 2>&1; then
+            google-chrome --headless=new --no-sandbox --disable-gpu --hide-scrollbars --window-size=1440,1000 --screenshot=/tmp/scc-media/crs-current.png https://crsrendering.co.uk/
+            google-chrome --headless=new --no-sandbox --disable-gpu --hide-scrollbars --window-size=1440,1000 --screenshot=/tmp/scc-media/pearl-current.png https://www.pearlcarpentry.co.uk/
+          elif command -v chromium-browser >/dev/null 2>&1; then
+            chromium-browser --headless --no-sandbox --disable-gpu --hide-scrollbars --window-size=1440,1000 --screenshot=/tmp/scc-media/crs-current.png https://crsrendering.co.uk/
+            chromium-browser --headless --no-sandbox --disable-gpu --hide-scrollbars --window-size=1440,1000 --screenshot=/tmp/scc-media/pearl-current.png https://www.pearlcarpentry.co.uk/
+          else
+            echo "No headless Chrome available for evidence capture."
+            exit 1
+          fi
+
+          convert /tmp/scc-media/crs-current.png -strip -quality 82 _deploy/assets/evidence/crs-current.webp
+          convert /tmp/scc-media/pearl-current.png -strip -quality 82 _deploy/assets/evidence/pearl-current.webp
+          test -s _deploy/assets/evidence/crs-current.webp
+          test -s _deploy/assets/evidence/pearl-current.webp
+
+          echo "Vendored first-party media:"
+          find _deploy/assets/vendor _deploy/assets/evidence -type f -maxdepth 2 -print
 
       - name: Test Hostinger SSH connection
         shell: bash
@@ -161,7 +200,7 @@ jobs:
             -o StrictHostKeyChecking=no \
             -o UserKnownHostsFile=/dev/null \
             "$SSH_USERNAME@$SSH_HOST" \
-            "test -s '$TARGET/index.html' && test -s '$TARGET/studio-2026.css' && grep -q 'Design people' '$TARGET/index.html' && echo REMOTE_RELEASE_OK"
+            "test -s '$TARGET/index.html' && test -s '$TARGET/studio-2026.css' && test -s '$TARGET/assets/vendor/crs-hero.webp' && test -s '$TARGET/assets/evidence/crs-current.webp' && grep -q 'Design people' '$TARGET/index.html' && echo REMOTE_RELEASE_OK"
 
       - name: Check live homepage
         shell: bash
